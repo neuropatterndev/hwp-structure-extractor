@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hwp-full-parser"
+version = "0.1.0"
+description = "Structured HWP parser with JSON extraction, media recovery, verification UI, Claude MCP server, and Claude Skill support."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+  {name = "YOUR NAME", email = "YOUR_EMAIL@example.com"}
+]
+keywords = ["hwp", "parser", "document-ai", "mcp", "claude", "skill", "korean-document"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Text Processing",
+]
+dependencies = [
+  "olefile>=0.47",
+  "lxml>=5.0.0",
+]
+
+[project.optional-dependencies]
+pyhwp = [
+  "pyhwp",
+]
+mcp = [
+  "mcp[cli]>=1.0.0",
+]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+  "build>=1.2.0",
+]
+all = [
+  "hwp-full-parser[pyhwp,mcp,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/YOUR_ID/hwp-full-parser"
+Repository = "https://github.com/YOUR_ID/hwp-full-parser"
+Issues = "https://github.com/YOUR_ID/hwp-full-parser/issues"
+
+[project.scripts]
+hwp-parse = "hwp_full_parser.cli:main"
+hwp-parser-mcp = "hwp_full_parser.mcp_server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

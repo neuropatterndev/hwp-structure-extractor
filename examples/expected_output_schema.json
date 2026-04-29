@@ -1,0 +1,67 @@
+{
+  "source_path": "sample.hwp",
+  "method": "pyhwp_xml+ole_media",
+  "metadata": {
+    "preview": {
+      "preview_image": "parsed/media/PrvImage.png",
+      "preview_text": "optional preview text"
+    }
+  },
+  "warnings": [],
+  "errors": [],
+  "media_files": [
+    {
+      "path": "parsed/media/BIN0001.png",
+      "name": "BIN0001.png",
+      "media_type": "image/png",
+      "source": "OLE:BinData",
+      "refs": ["BIN0001"],
+      "sha1": "sha1-hash",
+      "linked": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "paragraph",
+      "id": "p-example",
+      "order": 1,
+      "section": 0,
+      "text": "문단 텍스트"
+    },
+    {
+      "type": "table",
+      "id": "tbl-example",
+      "order": 2,
+      "caption": {
+        "text": "표 1. 예시 표",
+        "method": "structural-control",
+        "position": "before"
+      },
+      "rows": [
+        [
+          {
+            "text": "셀 텍스트",
+            "row": 0,
+            "col": 0,
+            "row_span": 1,
+            "col_span": 1,
+            "paragraphs": ["셀 텍스트"],
+            "content": []
+          }
+        ]
+      ]
+    },
+    {
+      "type": "image",
+      "id": "img-example",
+      "order": 3,
+      "image_path": "parsed/media/BIN0001.png",
+      "media_type": "image/png",
+      "caption": {
+        "text": "그림 1. 예시 그림",
+        "method": "pattern",
+        "position": "after"
+      }
+    }
+  ]
+}

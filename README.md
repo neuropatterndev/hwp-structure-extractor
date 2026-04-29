@@ -15,12 +15,12 @@ This project extracts text blocks, tables, table cells, images, captions, embedd
 - Fall back to direct OLE/Binary parsing when XML extraction is unavailable
 - Provide table/image/caption diagnostics for verification workflows
 - Export media files into a dedicated output directory
-- Provide a built-in web verification UI
+- Provide a built-in local web verification UI
 - Provide Python API, CLI, Claude MCP server, and Claude Skill support
 
 ## What this parser is for
 
-HWP Parser is useful when you need to convert `.hwp` files into a machine-readable structure for downstream processing.
+HWP Structure Extractor is useful when `.hwp` files need to be converted into machine-readable structures for downstream processing.
 
 Typical use cases include:
 
@@ -38,7 +38,7 @@ This project is **not** a full HWP layout renderer.
 
 It does not aim to reproduce exact visual page layout, typography, pagination, line wrapping, or complete rendering fidelity. For exact visual rendering, a dedicated HWP rendering engine is required.
 
-The built-in web UI is a verification interface for extracted structure, not a full replacement for Hancom Office or a browser-based HWP viewer.
+The built-in web UI is a verification interface for extracted structure, not a replacement for Hancom Office or a browser-based HWP viewer.
 
 ## Extraction strategy
 
@@ -46,7 +46,7 @@ The parser uses a layered extraction strategy.
 
 | Mode | Description |
 |---|---|
-| `auto` | Try XML extraction first, then use binary fallback if needed |
+| `auto` | Try XML extraction first when available, then use binary fallback if needed |
 | `pyhwp` | Use `hwp5proc xml --embedbin` and parse the generated XML |
 | `binary` | Read HWP OLE/CFB streams directly and extract records/media |
 | `xml` | Parse an already generated intermediate XML file |
@@ -57,13 +57,15 @@ Recommended default:
 hwp-parse sample.hwp --mode auto
 ```
 
+If `pyhwp/hwp5proc` is not installed, use binary mode or install the optional `pyhwp` extra after reviewing the license notice below.
+
 ## Installation
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/neuropatterndev/hwp-parser.git
-cd hwp-parser
+git clone https://github.com/neuropatterndev/hwp-structure-extractor.git
+cd hwp-structure-extractor
 ```
 
 Create a virtual environment:
@@ -122,13 +124,9 @@ Optional dependencies:
 
 - `pyhwp` for XML-based extraction through `hwp5proc`
 - `mcp` for Claude MCP server integration
-- `pytest` for development tests
+- `pytest`, `ruff`, and `build` for development workflows
 
-Recommended optional install:
-
-```bash
-pip install olefile lxml pyhwp
-```
+The core parser can run without `pyhwp` by using the binary fallback path. Install `pyhwp` only when XML-based extraction is needed and its AGPL license terms are acceptable for your use case.
 
 ## Quick start
 
@@ -447,7 +445,7 @@ The skill is designed to:
 ## Repository structure
 
 ```text
-hwp-parser/
+hwp-structure-extractor/
 ├── src/
 │   └── hwp_full_parser/
 │       ├── api.py
@@ -495,7 +493,7 @@ Known limitations:
 
 ### `hwp5proc` is not found
 
-Install optional `pyhwp` support:
+Install optional `pyhwp` support only if its AGPL license terms are acceptable for your project:
 
 ```bash
 pip install -e ".[pyhwp]"
@@ -566,11 +564,39 @@ When using MCP, restrict file access with:
 export HWP_PARSER_ALLOWED_ROOT=/absolute/path/to/workspace
 ```
 
+## Third-party dependencies and license notes
+
+This project uses the following third-party Python packages.
+
+| Dependency | Required? | Used for | License note |
+|---|---:|---|---|
+| `olefile` | Core | Reading OLE/CFB streams and extracting HWP `BinData` | BSD-style license |
+| `lxml` | Core | XML parsing for intermediate HWP XML output | BSD-3-Clause |
+| `pyhwp` | Optional | `hwp5proc` XML extraction path | GNU AGPL v3 or later |
+| `mcp` | Optional | Claude MCP server integration | MIT |
+| `pytest`, `ruff`, `build` | Development only | Tests, linting, packaging | See each package's license metadata |
+
+### Important note about `pyhwp`
+
+`pyhwp` is an optional dependency used only for the XML extraction path through `hwp5proc`. The parser can still run without `pyhwp` by using the binary fallback mode.
+
+`pyhwp` is licensed under the GNU Affero General Public License v3 or later. AGPL is a strong copyleft license with additional obligations for software made available over a network. If you install, modify, redistribute, bundle, or provide a service based on `pyhwp`, review the AGPL terms carefully before distribution or deployment.
+
+Relevant upstream information:
+
+- pyhwp repository: https://github.com/mete0r/pyhwp
+- pyhwp PyPI: https://pypi.org/project/pyhwp/
+- GNU AGPL v3: https://www.gnu.org/licenses/agpl-3.0.en.html
+
+This notice is provided for dependency transparency and is not legal advice.
+
 ## License
 
-The default license file in this repository should be reviewed before public distribution.
+Review the `LICENSE` file before public distribution.
 
-If you intend to release this project as open source, replace the placeholder license with the license you want to use, such as MIT, Apache-2.0, BSD-3-Clause, or GPL-compatible terms.
+If you intend to release this project as open source, choose and apply an explicit project license, such as MIT, Apache-2.0, BSD-3-Clause, GPL-3.0, or AGPL-compatible terms.
+
+Because optional `pyhwp` support may involve AGPL-licensed software, users who enable the `pyhwp` extra or distribute a combined package should verify license compatibility for their intended use case.
 
 ## Citation
 
@@ -579,5 +605,5 @@ If this parser is used in a research workflow, report, dataset construction pipe
 Example:
 
 ```text
-HWP Parser, version <commit-hash>, https://github.com/neuropatterndev/hwp-parser
+HWP Structure Extractor, version <commit-hash>, https://github.com/neuropatterndev/hwp-structure-extractor
 ```

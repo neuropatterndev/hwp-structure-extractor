@@ -1,49 +1,78 @@
-# HWP Full Parser
+# HWP Parser
 
-HWP Full Parser는 `.hwp` 문서를 문서 AI 검증 워크플로우에서 사용할 수 있도록 구조화된 JSON으로 추출하는 Python 패키지입니다. 기존 단일 파일 파서의 trial-and-error 로직을 `src/hwp_full_parser/core.py`에 그대로 보존하고, 그 위에 CLI, Python API, Claude MCP Server, Claude Skill을 얇은 wrapper로 추가했습니다.
+A practical HWP (`.hwp`) document parser for structured document-AI workflows.
 
-## 핵심 기능
+This project extracts text blocks, tables, table cells, images, captions, embedded media, and diagnostic metadata from Korean HWP documents. It is designed for document understanding, dataset construction, extraction verification, and LLM/RAG preprocessing rather than visual page rendering.
 
-- HWP 문서에서 문단, 표, 셀, 이미지, 캡션, media stream 추출
-- `pyhwp/hwp5proc` 기반 XML 추출 경로 우선 사용
-- `olefile` 기반 OLE/Binary fallback 경로 제공
-- `PrvImage`, `BinData`, caption-image hint, table/image placeholder 진단 유지
-- parser 결과를 `result.json`으로 저장
-- 내장 웹 검증 UI 제공
-- Claude Code / Claude Desktop용 MCP server 제공
-- Claude Skill 제공
+## Features
 
-## 저장소 구조
+- Parse `.hwp` documents into structured JSON
+- Extract paragraphs, tables, table cells, images, captions, and embedded media
+- Preserve document order as much as possible through ordered block objects
+- Detect and recover image streams from HWP `BinData`
+- Handle HWP preview image (`PrvImage`) when available
+- Use `pyhwp/hwp5proc` XML extraction when available
+- Fall back to direct OLE/Binary parsing when XML extraction is unavailable
+- Provide table/image/caption diagnostics for verification workflows
+- Export media files into a dedicated output directory
+- Provide a built-in web verification UI
+- Provide Python API, CLI, Claude MCP server, and Claude Skill support
 
-```text
-hwp-full-parser/
-├── src/hwp_full_parser/
-│   ├── core.py          # 원본 HWP parser 로직 보존
-│   ├── api.py           # MCP/Skill 공통 API wrapper
-│   ├── cli.py           # hwp-parse CLI entrypoint
-│   └── mcp_server.py    # Claude MCP server
-├── legacy/
-│   └── hwp_full_parser_v30_original.py
-├── .claude/skills/hwp-parser/
-│   ├── SKILL.md
-│   ├── scripts/parse_hwp.py
-│   └── references/
-├── docs/
-│   ├── GITHUB_UPLOAD_GUIDE.md
-│   ├── MCP_SETUP.md
-│   └── SKILL_SETUP.md
-├── examples/
-│   └── expected_output_schema.json
-└── tests/
-```
+## What this parser is for
 
-## 설치
+HWP Parser is useful when you need to convert `.hwp` files into a machine-readable structure for downstream processing.
+
+Typical use cases include:
+
+- Building document-AI datasets from HWP files
+- Extracting paragraphs and tables for NLP pipelines
+- Preparing HWP documents for LLM or RAG systems
+- Verifying whether captions, images, and tables were extracted correctly
+- Inspecting embedded HWP media streams
+- Creating structured JSON from Korean administrative, research, or report-style documents
+- Connecting HWP parsing functionality to Claude Code or Claude Desktop through MCP
+
+## What this parser is not
+
+This project is **not** a full HWP layout renderer.
+
+It does not aim to reproduce exact visual page layout, typography, pagination, line wrapping, or complete rendering fidelity. For exact visual rendering, a dedicated HWP rendering engine is required.
+
+The built-in web UI is a verification interface for extracted structure, not a full replacement for Hancom Office or a browser-based HWP viewer.
+
+## Extraction strategy
+
+The parser uses a layered extraction strategy.
+
+| Mode | Description |
+|---|---|
+| `auto` | Try XML extraction first, then use binary fallback if needed |
+| `pyhwp` | Use `hwp5proc xml --embedbin` and parse the generated XML |
+| `binary` | Read HWP OLE/CFB streams directly and extract records/media |
+| `xml` | Parse an already generated intermediate XML file |
+
+Recommended default:
 
 ```bash
-git clone https://github.com/YOUR_ID/hwp-full-parser.git
-cd hwp-full-parser
+hwp-parse sample.hwp --mode auto
+```
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/neuropatterndev/hwp-parser.git
+cd hwp-parser
+```
+
+Create a virtual environment:
+
+```bash
 python -m venv .venv
 ```
+
+Activate it.
 
 macOS/Linux:
 
@@ -57,66 +86,143 @@ Windows PowerShell:
 .venv\Scripts\Activate.ps1
 ```
 
-기본 설치:
+Install the package:
 
 ```bash
 pip install -e .
 ```
 
-MCP까지 사용할 경우:
+Install with MCP support:
 
 ```bash
 pip install -e ".[mcp]"
 ```
 
-`pyhwp/hwp5proc` 기반 XML 변환까지 사용할 경우:
+Install with optional `pyhwp/hwp5proc` support:
 
 ```bash
 pip install -e ".[pyhwp]"
 ```
 
-전체 개발 환경:
+Install all optional development dependencies:
 
 ```bash
 pip install -e ".[mcp,pyhwp,dev]"
 ```
 
-## CLI 사용법
+## Requirements
 
-문서 파싱:
+Core dependencies:
+
+- Python 3.10+
+- `olefile`
+- `lxml`
+
+Optional dependencies:
+
+- `pyhwp` for XML-based extraction through `hwp5proc`
+- `mcp` for Claude MCP server integration
+- `pytest` for development tests
+
+Recommended optional install:
+
+```bash
+pip install olefile lxml pyhwp
+```
+
+## Quick start
+
+Parse an HWP document:
 
 ```bash
 hwp-parse sample.hwp --output-dir parsed --print-summary
 ```
 
-중간 XML 보존:
+Output directory:
 
-```bash
-hwp-parse sample.hwp --output-dir parsed --keep-intermediate
+```text
+parsed/
+├── result.json
+├── media/
+└── intermediate.xml   # only when intermediate XML is preserved
 ```
 
-Binary fallback만 강제:
-
-```bash
-hwp-parse sample.hwp --output-dir parsed --mode binary
-```
-
-웹 검증 UI 실행:
+Launch the verification UI:
 
 ```bash
 hwp-parse sample.hwp --web --output-dir parsed
 ```
 
-브라우저 자동 실행 없이 localhost 서버만 실행:
+The UI opens a local web interface that shows:
+
+- internal first-page preview when available
+- extracted block list
+- paragraphs
+- tables
+- images
+- captions
+- warnings and errors
+- extracted media gallery
+- raw diagnostic metadata
+
+## CLI usage
+
+### Parse with default mode
+
+```bash
+hwp-parse sample.hwp --output-dir parsed
+```
+
+### Print extraction summary
+
+```bash
+hwp-parse sample.hwp --output-dir parsed --print-summary
+```
+
+### Keep intermediate XML
+
+```bash
+hwp-parse sample.hwp --output-dir parsed --keep-intermediate
+```
+
+### Force XML extraction
+
+```bash
+hwp-parse sample.hwp --output-dir parsed --mode pyhwp
+```
+
+### Force binary fallback
+
+```bash
+hwp-parse sample.hwp --output-dir parsed --mode binary
+```
+
+### Parse an intermediate XML file
+
+```bash
+hwp-parse intermediate.xml --output-dir parsed --mode xml
+```
+
+### Start verification UI
+
+```bash
+hwp-parse sample.hwp --web --output-dir parsed
+```
+
+### Start UI without opening browser automatically
 
 ```bash
 hwp-parse sample.hwp --web --no-browser --host 127.0.0.1 --port 7860
 ```
 
-## Python API 사용법
+## Python API
 
 ```python
-from hwp_full_parser.api import parse_hwp_document, extract_plain_text_from_json
+from hwp_full_parser.api import (
+    parse_hwp_document,
+    extract_plain_text_from_json,
+    summarize_result_json,
+)
 
 result = parse_hwp_document(
     input_path="sample.hwp",
@@ -126,74 +232,24 @@ result = parse_hwp_document(
 )
 
 print(result["summary"])
+print(result["result_json_path"])
 
 plain_text = extract_plain_text_from_json(result["result_json_path"])
 print(plain_text[:1000])
+
+summary = summarize_result_json(result["result_json_path"])
+print(summary)
 ```
 
-## MCP 사용법
+## Output JSON
 
-Claude Code에 local stdio MCP server로 등록합니다.
-
-```bash
-claude mcp add --transport stdio hwp-parser -- hwp-parser-mcp
-```
-
-프로젝트 단위로 공유하려면:
-
-```bash
-claude mcp add --scope project --transport stdio hwp-parser -- hwp-parser-mcp
-```
-
-수동 설정 예시는 `.mcp.json.example`에 포함되어 있습니다.
-
-제공 MCP tools:
-
-| Tool | 역할 |
-|---|---|
-| `parse_hwp_to_json` | `.hwp` 또는 중간 `.xml`을 구조화 JSON으로 파싱 |
-| `summarize_hwp_result` | `result.json`의 block/media/caption 통계 요약 |
-| `extract_hwp_plain_text` | LLM/RAG용 plain text 추출 |
-| `list_hwp_tables` | 파싱된 table block 목록 반환 |
-| `list_hwp_media` | 추출 media metadata 반환 |
-| `get_hwp_block` | 특정 `order` block 조회 |
-| `start_hwp_verification_ui` | 내장 검증 UI를 detached process로 실행 |
-
-보안을 위해 다음 환경변수를 설정하는 것을 권장합니다.
-
-```bash
-export HWP_PARSER_ALLOWED_ROOT=/absolute/path/to/your/workspace
-```
-
-이 값을 설정하면 MCP server는 해당 root 바깥의 파일을 읽거나 출력하지 않습니다.
-
-## Claude Skill 사용법
-
-이 저장소는 Claude Code project skill을 포함합니다.
-
-```text
-.claude/skills/hwp-parser/SKILL.md
-```
-
-Claude Code에서 자연어로 요청하거나, 명시적으로 skill을 호출합니다.
-
-```text
-/hwp-parser sample.hwp 파일을 파싱하고 표, 이미지, 캡션 추출 상태를 요약해줘.
-```
-
-Skill은 MCP server가 있으면 MCP tool 사용을 우선하고, 없으면 `scripts/parse_hwp.py`를 CLI fallback으로 사용하도록 설계되어 있습니다.
-
-## 출력 JSON 개요
-
-기본 출력은 다음 위치에 생성됩니다.
+The main output file is:
 
 ```text
 parsed/result.json
-parsed/media/
-parsed/intermediate.xml  # --keep-intermediate 사용 시
 ```
 
-`result.json`의 상위 구조:
+Top-level structure:
 
 ```json
 {
@@ -207,10 +263,321 @@ parsed/intermediate.xml  # --keep-intermediate 사용 시
 }
 ```
 
-상세 schema 예시는 `examples/expected_output_schema.json`을 참고하십시오.
+Each item in `blocks` represents a document-level structure such as:
 
+- paragraph
+- table
+- image
+- caption
+- placeholder or diagnostic block when recovery is partial
 
-## 주의 사항
+Example paragraph block:
 
-- 이 파서는 HWP layout renderer가 아닙니다. 문서 내부 구조를 추출하기 위한 parser입니다.
-- 전체 페이지 렌더링은 별도의 HWP rendering engine이 필요합니다.
+```json
+{
+  "type": "paragraph",
+  "id": "p-0001",
+  "order": 1,
+  "section": 0,
+  "text": "Example paragraph text"
+}
+```
+
+Example table block:
+
+```json
+{
+  "type": "table",
+  "id": "tbl-0001",
+  "order": 2,
+  "rows": [
+    [
+      {
+        "text": "Cell text",
+        "row": 0,
+        "col": 0,
+        "row_span": 1,
+        "col_span": 1
+      }
+    ]
+  ],
+  "caption": {
+    "text": "표 1. Example table caption",
+    "method": "pattern"
+  }
+}
+```
+
+Example image block:
+
+```json
+{
+  "type": "image",
+  "id": "img-0001",
+  "order": 3,
+  "image_path": "parsed/media/BIN0001.png",
+  "media_type": "image/png",
+  "caption": {
+    "text": "그림 1. Example figure caption",
+    "method": "pattern"
+  }
+}
+```
+
+See:
+
+```text
+examples/expected_output_schema.json
+```
+
+for a more complete schema example.
+
+## Media extraction
+
+Embedded media files are written to:
+
+```text
+parsed/media/
+```
+
+The parser attempts to detect common media formats by binary signature, including:
+
+- PNG
+- JPEG
+- GIF
+- BMP
+- TIFF
+- WEBP
+- WMF/EMF
+- SVG
+- PDF
+- ZIP-like embedded payloads
+
+Extracted media metadata is also recorded in `result.json` under `media_files`.
+
+## Verification UI
+
+The verification UI is intended for checking extraction quality.
+
+Run:
+
+```bash
+hwp-parse sample.hwp --web --output-dir parsed
+```
+
+The UI is useful for answering questions such as:
+
+- Were all paragraphs extracted?
+- Did table cells preserve row/column structure?
+- Were image files recovered?
+- Were captions attached to the correct table or image?
+- Are there unlinked media files?
+- Did the parser produce warnings or partial-recovery diagnostics?
+
+By default, the UI runs locally.
+
+```text
+http://127.0.0.1:7860
+```
+
+## Claude MCP integration
+
+This repository includes a Claude MCP server.
+
+Register it with Claude Code:
+
+```bash
+claude mcp add --transport stdio hwp-parser -- hwp-parser-mcp
+```
+
+Project-scoped registration:
+
+```bash
+claude mcp add --scope project --transport stdio hwp-parser -- hwp-parser-mcp
+```
+
+Provided MCP tools:
+
+| Tool | Description |
+|---|---|
+| `parse_hwp_to_json` | Parse `.hwp` or intermediate `.xml` into structured JSON |
+| `summarize_hwp_result` | Summarize parsed block/media/caption statistics |
+| `extract_hwp_plain_text` | Extract plain text for LLM/RAG workflows |
+| `list_hwp_tables` | List parsed table blocks |
+| `list_hwp_media` | List extracted media metadata |
+| `get_hwp_block` | Retrieve a specific block by `order` |
+| `start_hwp_verification_ui` | Start the local verification UI |
+
+Security recommendation:
+
+```bash
+export HWP_PARSER_ALLOWED_ROOT=/absolute/path/to/workspace
+```
+
+When this environment variable is set, the MCP server restricts file access to the specified workspace root.
+
+## Claude Skill integration
+
+This repository includes a Claude Code project skill:
+
+```text
+.claude/skills/hwp-parser/SKILL.md
+```
+
+Use it in Claude Code with natural language:
+
+```text
+Parse sample.hwp and summarize extracted paragraphs, tables, images, and captions.
+```
+
+Or explicitly:
+
+```text
+/hwp-parser sample.hwp 파일을 파싱하고 추출 결과를 요약해줘.
+```
+
+The skill is designed to:
+
+- choose an appropriate parser mode
+- prefer MCP tools when available
+- fall back to the local parser script when MCP is unavailable
+- summarize extraction results without dumping the entire JSON
+- guide inspection of tables, images, captions, and warnings
+
+## Repository structure
+
+```text
+hwp-parser/
+├── src/
+│   └── hwp_full_parser/
+│       ├── api.py
+│       ├── cli.py
+│       ├── core.py
+│       └── mcp_server.py
+├── .claude/
+│   └── skills/
+│       └── hwp-parser/
+├── docs/
+├── examples/
+├── tests/
+├── legacy/
+├── pyproject.toml
+├── requirements.txt
+├── requirements-mcp.txt
+└── README.md
+```
+
+## Testing
+
+Run smoke tests:
+
+```bash
+pytest
+```
+
+The included tests verify importability and basic package wiring. For production use, it is recommended to maintain a private regression set of representative HWP files and compare extraction summaries across versions.
+
+## Known limitations
+
+HWP is a complex binary document format. This parser is designed for robust structured extraction, but some documents may still require manual inspection.
+
+Known limitations:
+
+- It does not provide exact visual page rendering.
+- Some layout-specific information may be incomplete.
+- Complex nested tables may require verification.
+- Caption attachment can be document-dependent.
+- Damaged or encrypted HWP files may not be parsable.
+- Exact rendering of fonts, pagination, and object positioning is outside the project scope.
+- Some image formats such as WMF/EMF may be extracted but not previewable in all environments.
+
+## Troubleshooting
+
+### `hwp5proc` is not found
+
+Install optional `pyhwp` support:
+
+```bash
+pip install -e ".[pyhwp]"
+```
+
+Or use binary fallback:
+
+```bash
+hwp-parse sample.hwp --mode binary --output-dir parsed
+```
+
+### No images are shown in the UI
+
+Check:
+
+```text
+parsed/media/
+```
+
+and inspect `media_files` in:
+
+```text
+parsed/result.json
+```
+
+Some files may be extracted as media but not previewable by the browser.
+
+### Captions are not attached correctly
+
+Run the verification UI:
+
+```bash
+hwp-parse sample.hwp --web --output-dir parsed
+```
+
+Then inspect nearby blocks, unlinked media, and raw diagnostics.
+
+### Output JSON is too large for LLM use
+
+Use plain text extraction:
+
+```python
+from hwp_full_parser.api import extract_plain_text_from_json
+
+text = extract_plain_text_from_json("parsed/result.json")
+```
+
+Or use the MCP tools that return summaries, table lists, media lists, or individual blocks instead of the full JSON.
+
+## Security and privacy
+
+Do not commit private HWP documents, extracted media files, generated JSON files, or intermediate XML files to a public repository.
+
+Recommended `.gitignore` targets include:
+
+```text
+parsed/
+hwp_parsed_output/
+*.hwp
+*.hwpx
+*.pdf
+.env
+```
+
+When using MCP, restrict file access with:
+
+```bash
+export HWP_PARSER_ALLOWED_ROOT=/absolute/path/to/workspace
+```
+
+## License
+
+The default license file in this repository should be reviewed before public distribution.
+
+If you intend to release this project as open source, replace the placeholder license with the license you want to use, such as MIT, Apache-2.0, BSD-3-Clause, or GPL-compatible terms.
+
+## Citation
+
+If this parser is used in a research workflow, report, dataset construction pipeline, or document-AI benchmark, please cite the repository URL and version or commit hash used for extraction.
+
+Example:
+
+```text
+HWP Parser, version <commit-hash>, https://github.com/neuropatterndev/hwp-parser
+```

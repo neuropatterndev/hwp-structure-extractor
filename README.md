@@ -209,13 +209,8 @@ parsed/intermediate.xml  # --keep-intermediate 사용 시
 
 상세 schema 예시는 `examples/expected_output_schema.json`을 참고하십시오.
 
-## 설계 원칙
-
-이 패키지는 원본 파서의 trial-and-error 로직을 보존하는 것을 최우선으로 합니다. 따라서 핵심 파서 로직은 `core.py`에 그대로 유지하고, MCP/Skill/CLI/API는 모두 wrapper로만 동작합니다. 향후 refactoring을 하더라도 먼저 regression sample set을 만든 뒤, `core.py`의 기능 동등성을 검증한 후 단계적으로 분리하는 것이 안전합니다.
 
 ## 주의 사항
 
-- 이 파서는 HWP layout renderer가 아닙니다. 문서 내부 구조를 추출하고 검증하기 위한 parser입니다.
+- 이 파서는 HWP layout renderer가 아닙니다. 문서 내부 구조를 추출하기 위한 parser입니다.
 - 전체 페이지 렌더링은 별도의 HWP rendering engine이 필요합니다.
-- 비공개 HWP 문서, 과제 자료, 개인정보 포함 파일, 추출 media는 GitHub에 올리지 마십시오.
-- `LICENSE`는 기본적으로 all-rights-reserved placeholder입니다. 공개 오픈소스로 배포하려면 의도에 맞는 라이선스로 교체하십시오.

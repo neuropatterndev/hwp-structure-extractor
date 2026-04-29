@@ -32,14 +32,6 @@ Typical use cases include:
 - Creating structured JSON from Korean administrative, research, or report-style documents
 - Connecting HWP parsing functionality to Claude Code or Claude Desktop through MCP
 
-## What this parser is not
-
-This project is **not** a full HWP layout renderer.
-
-It does not aim to reproduce exact visual page layout, typography, pagination, line wrapping, or complete rendering fidelity. For exact visual rendering, a dedicated HWP rendering engine is required.
-
-The built-in web UI is a verification interface for extracted structure, not a replacement for Hancom Office or a browser-based HWP viewer.
-
 ## Extraction strategy
 
 The parser uses a layered extraction strategy.

@@ -32,6 +32,14 @@ Typical use cases include:
 - Creating structured JSON from Korean administrative, research, or report-style documents
 - Connecting HWP parsing functionality to Claude Code or Claude Desktop through MCP
 
+## What this parser is not
+
+This project is **not** a full HWP layout renderer.
+
+It does not aim to reproduce exact visual page layout, typography, pagination, line wrapping, or complete rendering fidelity. For exact visual rendering, a dedicated HWP rendering engine is required.
+
+The built-in web UI is a verification interface for extracted structure, not a full replacement for Hancom Office or a browser-based HWP viewer.
+
 ## Extraction strategy
 
 The parser uses a layered extraction strategy.
@@ -49,14 +57,14 @@ Recommended default:
 hwp-parse sample.hwp --mode auto
 ```
 
-If `pyhwp/hwp5proc` is not installed, use binary mode or install the optional `pyhwp` extra after reviewing the license notice below.
+If `pyhwp/hwp5proc` is not installed, use binary mode or install the optional `pyhwp` extra after reviewing the dependency notice below.
 
 ## Installation
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/neuropatterndev/hwp-structure-extractor.git
+git clone https://github.com/<your-username>/hwp-structure-extractor.git
 cd hwp-structure-extractor
 ```
 
@@ -558,11 +566,11 @@ export HWP_PARSER_ALLOWED_ROOT=/absolute/path/to/workspace
 
 ## Third-party dependencies and license notes
 
-This project uses the following third-party Python packages.
+This project is licensed under the Apache License 2.0. Third-party dependencies remain under their own licenses.
 
 | Dependency | Required? | Used for | License note |
 |---|---:|---|---|
-| `olefile` | Core | Reading OLE/CFB streams and extracting HWP `BinData` | BSD-style license |
+| `olefile` | Core | Reading OLE/CFB streams and extracting HWP `BinData` | BSD-2-Clause according to conda-forge metadata |
 | `lxml` | Core | XML parsing for intermediate HWP XML output | BSD-3-Clause |
 | `pyhwp` | Optional | `hwp5proc` XML extraction path | GNU AGPL v3 or later |
 | `mcp` | Optional | Claude MCP server integration | MIT |
@@ -572,23 +580,22 @@ This project uses the following third-party Python packages.
 
 `pyhwp` is an optional dependency used only for the XML extraction path through `hwp5proc`. The parser can still run without `pyhwp` by using the binary fallback mode.
 
-`pyhwp` is licensed under the GNU Affero General Public License v3 or later. AGPL is a strong copyleft license with additional obligations for software made available over a network. If you install, modify, redistribute, bundle, or provide a service based on `pyhwp`, review the AGPL terms carefully before distribution or deployment.
+`pyhwp` is licensed under the GNU Affero General Public License v3 or later. AGPL is a strong copyleft license with additional obligations for software made available over a network. If you install, modify, redistribute, bundle, or provide a service based on `pyhwp`, review the AGPL terms before distribution or deployment.
 
 Relevant upstream information:
 
 - pyhwp repository: https://github.com/mete0r/pyhwp
 - pyhwp PyPI: https://pypi.org/project/pyhwp/
 - GNU AGPL v3: https://www.gnu.org/licenses/agpl-3.0.en.html
-
-This notice is provided for dependency transparency and is not legal advice.
+- Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
 ## License
 
-Review the `LICENSE` file before public distribution.
+This project is licensed under the Apache License 2.0. See the `LICENSE` file for the full license text.
 
-If you intend to release this project as open source, choose and apply an explicit project license, such as MIT, Apache-2.0, BSD-3-Clause, GPL-3.0, or AGPL-compatible terms.
+This license applies to the source code in this repository. It does not modify the license terms of third-party dependencies. In particular, optional `pyhwp` support remains subject to `pyhwp`'s AGPL license terms when that optional path is installed or used.
 
-Because optional `pyhwp` support may involve AGPL-licensed software, users who enable the `pyhwp` extra or distribute a combined package should verify license compatibility for their intended use case.
+SPDX-License-Identifier: Apache-2.0
 
 ## Citation
 
@@ -597,5 +604,5 @@ If this parser is used in a research workflow, report, dataset construction pipe
 Example:
 
 ```text
-HWP Structure Extractor, version <commit-hash>, https://github.com/neuropatterndev/hwp-structure-extractor
+HWP Structure Extractor, version <commit-hash>, https://github.com/<your-username>/hwp-structure-extractor
 ```

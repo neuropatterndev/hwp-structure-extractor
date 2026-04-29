@@ -1,6 +1,6 @@
-# HWP Parser
+# HWP Structure Extractor
 
-A practical HWP (`.hwp`) document parser for structured document-AI workflows.
+Structured HWP extraction for document-AI, LLM/RAG preprocessing, and verification workflows.
 
 This project extracts text blocks, tables, table cells, images, captions, embedded media, and diagnostic metadata from Korean HWP documents. It is designed for document understanding, dataset construction, extraction verification, and LLM/RAG preprocessing rather than visual page rendering.
 
